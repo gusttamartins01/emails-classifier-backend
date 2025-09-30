@@ -6,4 +6,3 @@ nltk
 python-multipart 
 PyPDF2
 groq
-spacy
