@@ -89,6 +89,7 @@ GROQ_API_KEY="sua-chave-aqui"
 ### Execução
 
 ```bash
+
 uvicorn main:app --reload
 ```
 
