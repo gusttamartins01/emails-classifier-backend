@@ -1,69 +1,67 @@
 import nltk
+import os
+import re
 from nltk.corpus import stopwords
-from nltk.tokenize import WordPunctTokenizer # <-- Nova importação
-import string
-from typing import Optional
+from nltk.tokenize import word_tokenize
 
-# ----------------------------------------------------
-# 1. GARANTIA DE DOWNLOAD NLTK (ESSENCIAL PARA O VERCEL)
-# Manteremos os downloads de 'punkt' e 'stopwords' para garantir os recursos.
-# O 'WordPunctTokenizer' não precisa de 'punkt', mas a lógica de 'sent_tokenize'
-# dentro do NLTK pode precisar dele, e as stopwords são essenciais.
-# ----------------------------------------------------
+# --- 1. Configuração do NLTK para o Vercel/Lambda ---
+
+# Define o diretório /tmp para o download dos dados do NLTK,
+# pois o ambiente Vercel é somente leitura exceto em /tmp.
+nltk_data_dir = os.path.join("/tmp", "nltk_data")
+if nltk_data_dir not in nltk.data.path:
+    nltk.data.path.append(nltk_data_dir)
+
+# Baixa os recursos necessários, se não estiverem presentes
 try:
-    # Tenta verificar se os recursos já existem
+    # Tenta carregar o 'punkt' para verificar se já existe
     nltk.data.find('tokenizers/punkt')
     nltk.data.find('corpora/stopwords')
-except nltk.downloader.DownloadError:
-    # Se não existirem, faz o download
-    nltk.download('punkt')
-    nltk.download('stopwords')
+    print("NLTK 'punkt' e 'stopwords' já carregados.")
 
-# Tenta carregar os recursos após o download/verificação
-try:
-    stop_words = set(stopwords.words('portuguese'))
 except LookupError:
-    stop_words = set()
+    # Se não encontrar (LookupError), faz o download para o diretório /tmp
+    print("Baixando NLTK 'punkt' e 'stopwords' para /tmp/nltk_data...")
     
-# Inicializa o tokenizador WordPunct uma única vez
-word_tokenizer = WordPunctTokenizer()
-# ----------------------------------------------------
+    # É mais robusto e seguro usar nltk.download() com o download_dir
+    nltk.download('punkt', download_dir=nltk_data_dir)
+    nltk.download('stopwords', download_dir=nltk_data_dir)
+
+# --- Fim da Configuração do NLTK ---
 
 
-def preprocess_text(texto: Optional[str]) -> str:
-    """
-    Realiza o pré-processamento de texto usando NLTK (leve e robusto).
-    Utiliza WordPunctTokenizer para evitar falhas de recursos como 'punkt_tab'.
-    """
+# Inicializa as stopwords APÓS garantir que foram baixadas
+try:
+    STOP_WORDS = set(stopwords.words('portuguese'))
+except Exception as e:
+    # Caso as stopwords ainda falhem, usa um conjunto vazio
+    print(f"Erro ao carregar stopwords: {e}")
+    STOP_WORDS = set() 
     
-    # 1. Validação de entrada
-    if not texto or not isinstance(texto, str):
+def preprocess_text(text: str) -> str:
+    """
+    Realiza o pré-processamento básico do texto:
+    - Minúsculas
+    - Remoção de caracteres não alfanuméricos (exceto espaços)
+    - Tokenização e remoção de stopwords
+    """
+    if not text:
         return ""
 
-    # Inicializa a lista de tokens processados
-    processados = []
+    # 1. Minúsculas
+    text = text.lower()
+    
+    # 2. Remove URLs e pontuação
+    text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
+    text = re.sub(r'[^\w\s]', '', text)
 
-    # 2. Converte para minúsculas e remove espaços extras
-    texto_limpo = texto.lower().strip()
-
-    # 3. Tokenização
-    # Agora usamos o WordPunctTokenizer.tokenize() para evitar a dependência de punkt_tab.
-    tokens = word_tokenizer.tokenize(texto_limpo)
-
-    # Define pontuação a ser removida
-    punctuations = set(string.punctuation)
-
-    # 4. Pré-processamento (filtragem)
-    for token in tokens:
-        # Pula se for stopword, pontuação, ou número
-        if token in stop_words:
-            continue
-        if token in punctuations:
-            continue
-        if token.isdigit():
-            continue
-        
-        processados.append(token)
-
-    # 5. Junta os tokens de volta em uma string
-    return " ".join(processados)
+    # 3. Tokeniza
+    tokens = word_tokenize(text, language='portuguese')
+    
+    # 4. Remove Stopwords
+    filtered_tokens = [word for word in tokens if word not in STOP_WORDS]
+    
+    # 5. Junta o texto novamente
+    processed_text = ' '.join(filtered_tokens)
+    
+    return processed_text.strip()
