@@ -19,11 +19,3 @@ __pycache__/
 tests/
 examples/
 docs/
-
-# SE VOCÊ TIVER ARQUIVOS DE DADOS OU MODELOS GRANDES:
-# Se o seu classificador usa um modelo .pkl ou outro arquivo de dados grande, 
-# mas você o carrega de um serviço externo (como S3) em vez de empacotá-lo, 
-# liste-o aqui. SE ELE PRECISA ESTAR NO DEPLOY, NÃO O IGNORE!
-# Exemplo:
-# large_model_file.pkl
-# big_data_folder/
