@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+httpx
+python-dotenv
+nltk
+transformers
+python-multipart 
+PyPDF2
+groq
