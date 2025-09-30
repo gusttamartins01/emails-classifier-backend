@@ -1,13 +1,14 @@
 import nltk
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import WordPunctTokenizer # <-- Nova importação
 import string
 from typing import Optional
 
 # ----------------------------------------------------
 # 1. GARANTIA DE DOWNLOAD NLTK (ESSENCIAL PARA O VERCEL)
-# Este bloco garante que os recursos do NLTK estejam disponíveis.
-# Ele roda na inicialização e é a chave para o Vercel não falhar por LookupError.
+# Manteremos os downloads de 'punkt' e 'stopwords' para garantir os recursos.
+# O 'WordPunctTokenizer' não precisa de 'punkt', mas a lógica de 'sent_tokenize'
+# dentro do NLTK pode precisar dele, e as stopwords são essenciais.
 # ----------------------------------------------------
 try:
     # Tenta verificar se os recursos já existem
@@ -20,18 +21,19 @@ except nltk.downloader.DownloadError:
 
 # Tenta carregar os recursos após o download/verificação
 try:
-    # Carrega as stopwords do idioma português
     stop_words = set(stopwords.words('portuguese'))
 except LookupError:
-    # Em caso de falha de carregamento (improvável), usa um set vazio
     stop_words = set()
+    
+# Inicializa o tokenizador WordPunct uma única vez
+word_tokenizer = WordPunctTokenizer()
 # ----------------------------------------------------
 
 
 def preprocess_text(texto: Optional[str]) -> str:
     """
-    Realiza o pré-processamento de texto usando NLTK (leve).
-    Inclui conversão para minúsculas, tokenização e remoção de pontuação e stopwords.
+    Realiza o pré-processamento de texto usando NLTK (leve e robusto).
+    Utiliza WordPunctTokenizer para evitar falhas de recursos como 'punkt_tab'.
     """
     
     # 1. Validação de entrada
@@ -45,22 +47,19 @@ def preprocess_text(texto: Optional[str]) -> str:
     texto_limpo = texto.lower().strip()
 
     # 3. Tokenização
-    # **IMPORTANTE:** Removemos 'language='portuguese'' para evitar o erro 'punkt_tab'.
-    # O tokenizador padrão é suficiente para a maioria das tarefas de limpeza.
-    tokens = word_tokenize(texto_limpo)
+    # Agora usamos o WordPunctTokenizer.tokenize() para evitar a dependência de punkt_tab.
+    tokens = word_tokenizer.tokenize(texto_limpo)
 
     # Define pontuação a ser removida
     punctuations = set(string.punctuation)
 
     # 4. Pré-processamento (filtragem)
     for token in tokens:
-        # Pula se for stopword ou pontuação
+        # Pula se for stopword, pontuação, ou número
         if token in stop_words:
             continue
         if token in punctuations:
             continue
-            
-        # Pula se for um token puramente numérico (ex: '2025')
         if token.isdigit():
             continue
         
