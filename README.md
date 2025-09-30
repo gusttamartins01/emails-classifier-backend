@@ -244,9 +244,7 @@ uvicorn[standard]
 httpx
 python-dotenv
 nltk
-transformers
 python-multipart
-spacy
 groq
 ```
 
