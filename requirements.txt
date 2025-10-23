@@ -6,3 +6,7 @@ nltk
 python-multipart 
 PyPDF2
 groq
+<<<<<<< HEAD
+=======
+spacy
+>>>>>>> 1d464f4 (install dependence spacy in portugues)
